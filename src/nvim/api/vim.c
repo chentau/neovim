@@ -2952,6 +2952,7 @@ FUNC_API_SINCE(7)
 
   if (global_filterfunc != NULL) {
     XFREE_CLEAR(global_filterfunc);
+    active_filterfunc = NULL;
   }
 
   if (func == -1) { // Nil
