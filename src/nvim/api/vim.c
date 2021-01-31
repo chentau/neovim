@@ -2875,9 +2875,6 @@ String nvim_complete(Integer startcol,
   FUNC_API_SINCE(7)
 {
   typval_T tv;
-  extern LuaRef *user_filterfunc;
-  extern LuaRef *active_filterfunc;
-  LuaRef filterfunc;
 
   if (matches.type != kObjectTypeArray) {
     api_set_error(err, kErrorTypeValidation,
@@ -2885,7 +2882,7 @@ String nvim_complete(Integer startcol,
   }
 
   if ((State & INSERT) == 0) {
-    api_set_error(err, kErrorTypeValidation,
+    api_set_error(err, kErrorTypeException,
             "complete() can only be used in Insert mode");
     goto error;
   }
@@ -2909,10 +2906,8 @@ String nvim_complete(Integer startcol,
                 "expected lua function");
         goto error;
       }
-      filterfunc = api_new_luaref(v->data.luaref);
-      user_filterfunc = xmalloc(sizeof(LuaRef));
-      memcpy(user_filterfunc, &filterfunc, sizeof(LuaRef));
-      active_filterfunc = user_filterfunc;
+      active_filterfunc = user_filterfunc = v->data.luaref;
+      v->data.luaref = LUA_NOREF;
     } else {
       api_set_error(err, kErrorTypeValidation,
               "undexpected key");
@@ -2948,21 +2943,12 @@ error:
 void nvim_register_filterfunc(LuaRef func, Error *err)
 FUNC_API_SINCE(7)
 {
-  extern LuaRef *global_filterfunc;
-  extern LuaRef *active_filterfunc;
-  LuaRef filterfunc;
-
-  if (global_filterfunc != NULL) {
-    XFREE_CLEAR(global_filterfunc);
-    active_filterfunc = NULL;
-  }
-
-  if (func == -1) { // Nil
+  if (func == -1) { // nil value for func
+    api_free_luaref(global_filterfunc);
+    active_filterfunc = global_filterfunc = LUA_NOREF;
     return;
   }
 
-  filterfunc = api_new_luaref(func);
-  global_filterfunc = xmalloc(sizeof(LuaRef));
-  memcpy(global_filterfunc, &filterfunc, sizeof(LuaRef));
-  active_filterfunc = global_filterfunc;
+  active_filterfunc = global_filterfunc = api_new_luaref(func);
+  return;
 }

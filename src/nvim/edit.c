@@ -162,13 +162,6 @@ struct compl_score_S {
   double score;
 };
 
-// lua functions used to filter completion matches
-// global_filterfunc is used for all completion sources,
-// while user_filterfunc is only used to filter matches
-// from vim.api.nvim_complete().
-LuaRef *global_filterfunc = NULL;
-LuaRef *user_filterfunc = NULL;
-LuaRef *active_filterfunc = NULL;
 
 /*
  * All the current matches are stored in a list.
@@ -181,6 +174,14 @@ static compl_T    *compl_first_match = NULL;
 static compl_T    *compl_curr_match = NULL;
 static compl_T    *compl_shown_match = NULL;
 static compl_T    *compl_old_match = NULL;
+
+// lua functions used to filter completion matches
+// global_filterfunc is used for all completion sources,
+// while user_filterfunc is only used to filter matches
+// from vim.api.nvim_complete().
+LuaRef global_filterfunc = LUA_NOREF;
+LuaRef user_filterfunc = LUA_NOREF;
+LuaRef active_filterfunc = LUA_NOREF;
 
 /* After using a cursor key <Enter> selects a match in the popup menu,
  * otherwise it inserts a line break. */
@@ -2468,16 +2469,17 @@ static double ins_compl_match(compl_T *match, char_u *str, size_t len)
     return true;
   }
 
-  if (active_filterfunc != NULL) {
+  if (active_filterfunc != LUA_NOREF) {
     ADD(args, STRING_OBJ(cstr_to_string((char *)str)));
     ADD(args, STRING_OBJ(cstr_to_string((char *)match->cp_str)));
 
-    retval = nlua_call_ref(*active_filterfunc, NULL, args, true, &err);
+    retval = nlua_call_ref(active_filterfunc, NULL, args, true, &err);
 
     api_free_array(args);
 
     if (ERROR_SET(&err)) {
       EMSG(_(err.msg));
+      api_clear_error(&err);
       return 0;
     } else {
       if (retval.type == kObjectTypeFloat) {
@@ -2859,7 +2861,7 @@ int set_compl_match_array(void)
 
   // If we are doing filtering via a lua function, sort the completion
   // items according to the scores
-  if (active_filterfunc != NULL && compl_leader != NULL) {
+  if (active_filterfunc != LUA_NOREF && compl_leader != NULL) {
     sort_completions(compl_matches + 1, scores);
   }
 
@@ -3463,7 +3465,7 @@ static int ins_compl_bs(void)
   // Respect the 'backspace' option.
   if ((int)(p - line) - (int)compl_col < 0
       || ((int)(p - line) - (int)compl_col == 0
-          && (ctrl_x_mode != CTRL_X_OMNI && ctrl_x_mode != CTRL_X_EVAL))
+          && ctrl_x_mode != CTRL_X_OMNI)
       || (!can_bs(BS_START) && (int)(p - line) - (int)compl_col
           - compl_length < 0)) {
     return K_BS;
@@ -3882,8 +3884,9 @@ static bool ins_compl_prep(int c)
 
       // When we are done completing from vim.api.nvim_complete(),
       // reset the user filterfunc, if one was provided
-      if (user_filterfunc != NULL) {
-        XFREE_CLEAR(user_filterfunc);
+      if (user_filterfunc != LUA_NOREF) {
+        api_free_luaref(user_filterfunc);
+        user_filterfunc = LUA_NOREF;
         active_filterfunc = global_filterfunc;
       }
 
