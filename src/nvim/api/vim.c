@@ -2860,7 +2860,9 @@ error:
 ///                     Any text between startcol and the current
 ///                     cursor col is replaced by the completion.
 /// @param matches: A list of string matches.
-/// @param opts: Dictionary. No possible keys for now
+/// @param opts: Dictionary. Possible keys:
+///                 filterfunc: function used for filtering the
+///                     matches. See |nvim_register_filterfunc|.
 //
 // todo: completefunc with refresh: always
 // todo: figure out what to do with ctrl_e and ctrl_l
@@ -2935,7 +2937,7 @@ error:
 ///
 /// Register a lua function for filtering completion matches.
 /// The function must take in two arguments: the prefix (the
-/// currently typed text), and the text for a completion entry, and 
+/// currently typed text), and the text for a completion entry, and
 /// returns a float. Higher return values imply a better match, and a
 /// return value of 0 removes the entry from being shown.
 /// To remove the currently registered function, call the function

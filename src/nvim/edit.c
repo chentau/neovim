@@ -2775,7 +2775,7 @@ static void sort_completions(int num_items, compl_score_T *scores)
 
   qsort(scores, num_items, sizeof(compl_score_T), compare_scores);
 
-  // TODO(chentau): We don;t need to sort the entire linked
+  // TODO(chentau): We don't need to sort the entire linked
   // list; we just need to sort the first compl_match_arraysize entries,
   // since only those will be shown in the pum.
   for (i = 1; i < num_items; ++i) {
@@ -2808,6 +2808,7 @@ int set_compl_match_array(void)
   bool shown_match_ok = false;
   int lead_len;
   int i = 0;
+  int j = 0;
   int cur = -1;
 
   compl_match_arraysize = 0;
@@ -2865,11 +2866,15 @@ int set_compl_match_array(void)
     shown_match_ok = true;
   }
 
+  // i keeps track of which entry of compl_match_array we are at,
+  // while j keeps track of which entry of the completion linked list
+  // we are at.
   i = 0;
+  j = 0;
   compl = compl_first_match;
   do {
     if ((compl->cp_flags & CP_ORIGINAL_TEXT) == 0
-        && (scores[i].score)) {
+        && (scores[j].score)) {
       if (!shown_match_ok) {
         if (compl == compl_shown_match || did_find_shown_match) {
           // This item is the shown match or this is the
@@ -2919,6 +2924,7 @@ int set_compl_match_array(void)
         shown_match_ok = true;
       }
     }
+    j++;
     compl = compl->cp_next;
   } while (compl != NULL && compl != compl_first_match);
   if (!shown_match_ok) { // no displayed match at all
