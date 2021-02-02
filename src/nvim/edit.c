@@ -2481,15 +2481,15 @@ static double ins_compl_match(compl_T *match, char_u *str, size_t len)
       EMSG(_(err.msg));
       api_clear_error(&err);
       return 0;
+    }
+
+    if (retval.type == kObjectTypeFloat) {
+      return retval.data.floating;
+    } else if (retval.type == kObjectTypeInteger) {
+      return retval.data.integer;
     } else {
-      if (retval.type == kObjectTypeFloat) {
-        return retval.data.floating;
-      } else if (retval.type == kObjectTypeInteger) {
-        return retval.data.integer;
-      } else {
-        EMSG(_("invalid return type from function"));
-        return 0;
-      }
+      EMSG(_("invalid return type from function"));
+      return 0;
     }
   }
 
@@ -3466,6 +3466,7 @@ static int ins_compl_bs(void)
   if ((int)(p - line) - (int)compl_col < 0
       || ((int)(p - line) - (int)compl_col == 0
           && ctrl_x_mode != CTRL_X_OMNI)
+      || ctrl_x_mode == CTRL_X_EVAL
       || (!can_bs(BS_START) && (int)(p - line) - (int)compl_col
           - compl_length < 0)) {
     return K_BS;

@@ -2869,17 +2869,12 @@ error:
 // todo: what to do if filterfunc != NULL AND completion entry
 // has icase/equal set.
 String nvim_complete(Integer startcol,
-                   Object matches,
+                   ArrayOf(String) matches,
                    DictionaryOf(LuaRef) opts,
                    Error *err)
   FUNC_API_SINCE(7)
 {
   typval_T tv;
-
-  if (matches.type != kObjectTypeArray) {
-    api_set_error(err, kErrorTypeValidation,
-              "wrong type");
-  }
 
   if ((State & INSERT) == 0) {
     api_set_error(err, kErrorTypeException,
@@ -2915,7 +2910,7 @@ String nvim_complete(Integer startcol,
     }
   }
 
-  object_to_vim(matches, &tv, err);
+  object_to_vim(ARRAY_OBJ(matches), &tv, err);
   if ERROR_SET(err){
       goto error;
   }

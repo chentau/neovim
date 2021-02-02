@@ -51,6 +51,18 @@ func Test_popup_complete()
   call assert_equal(["August"], getline(1,2))
   %d
 
+  " <BS> - Delete one character from the inserted text (state: 1)
+  " TODO: This should not end the completion, but it does.
+  " This should according to the documentation:
+  " January
+  " but instead, this does
+  " Januar
+  " (idea is, C-L inserts the match from the popup menu
+  " but if the menu is closed, it will insert the character <c-l>
+  call feedkeys("aJ\<f5>\<bs>\<c-l>\<esc>", 'tx')
+  call assert_equal(["Januar"], getline(1,2))
+  %d
+
   " any-non special character: Stop completion without changing the match
   " and insert the typed character
   call feedkeys("a\<f5>20", 'tx')
