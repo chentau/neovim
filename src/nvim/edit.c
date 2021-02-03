@@ -160,6 +160,7 @@ typedef struct compl_score_S compl_score_T;
 struct compl_score_S {
   compl_T   *compl;
   double score;
+  int order;
 };
 
 
@@ -2763,7 +2764,7 @@ static int compare_scores(const void *a, const void *b)
   } else {
     // qsort is not stable: we don't want to flip two items that have
     // the same score.
-    return (compl_score_T *)a - (compl_score_T *)b;
+    return ((compl_score_T *)a)->order - ((compl_score_T *)b)->order;
   }
 }
 
@@ -2836,6 +2837,7 @@ int set_compl_match_array(void)
   scores = xcalloc(compl_matches + 1, sizeof(compl_score_T));
 
   do {
+    scores[i].order = i;
     scores[i].compl = compl;
     if ((compl->cp_flags & CP_ORIGINAL_TEXT) == 0) {
       if (compl_leader != NULL) {
