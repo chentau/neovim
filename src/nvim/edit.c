@@ -2639,7 +2639,6 @@ void set_completion(colnr_T startcol, list_T *list)
   // compl_pattern doesn't need to be set
   compl_orig_text = vim_strnsave(get_cursor_line_ptr() + compl_col,
                                  compl_length);
-  compl_leader = (char_u *)xstrdup("");
   if (p_ic) {
     flags |= CP_ICASE;
   }
@@ -2837,9 +2836,10 @@ int set_compl_match_array(void)
   do {
     scores[i].compl = compl;
     if ((compl->cp_flags & CP_ORIGINAL_TEXT) == 0) {
-      scores[i].score = 1;
       if (compl_leader != NULL) {
         scores[i].score = ins_compl_match(compl, compl_leader, lead_len);
+      } else {
+        scores[i].score = ins_compl_match(compl, (char_u *)"", 0);
       }
 
       if (scores[i].score) {
@@ -2864,7 +2864,7 @@ int set_compl_match_array(void)
 
   // If we are doing filtering via a lua function, sort the completion
   // items according to the scores
-  if (active_filterfunc != LUA_NOREF && compl_leader != NULL) {
+  if (active_filterfunc != LUA_NOREF) {
     sort_completions(compl_matches + 1, scores);
   }
 
@@ -5378,12 +5378,6 @@ static int ins_complete(int c, bool enable_pum)
     } else {
       edit_submode_pre = NULL;
       compl_startpos.col = compl_col;
-    }
-
-    // set compl_leader to be an empty string to enable completion sorting,
-    // except for when called from completefunc
-    if (ctrl_x_mode != CTRL_X_FUNCTION && compl_leader == NULL) {
-      compl_leader = (char_u *)xstrdup("");
     }
 
     if (compl_cont_status & CONT_LOCAL)
