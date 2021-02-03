@@ -2864,28 +2864,27 @@ error:
 ///                 filterfunc: function used for filtering the
 ///                     matches. See |nvim_register_filterfunc|.
 //
-// todo: completefunc with refresh: always
-// todo: figure out what to do with ctrl_e and ctrl_l
 // todo: what to do if filterfunc != NULL AND completion entry
 // has icase/equal set.
 String nvim_complete(Integer startcol,
-                   ArrayOf(String) matches,
-                   DictionaryOf(LuaRef) opts,
-                   Error *err)
+                     ArrayOf(String) matches,
+                     DictionaryOf(LuaRef) opts,
+                     Error *err)
   FUNC_API_SINCE(7)
 {
   typval_T tv;
 
   if ((State & INSERT) == 0) {
     api_set_error(err, kErrorTypeException,
-            "complete() can only be used in Insert mode");
+                  "complete() can only be used in Insert mode");
     goto error;
   }
 
   // Check for undo allowed here, because if something was already inserted
   // the line was already saved for undo and this check isn't done.
-  if (!undo_allowed())
+  if (!undo_allowed()) {
       goto error;
+  }
 
   if (startcol <= 0) {
       goto error;
@@ -2895,23 +2894,23 @@ String nvim_complete(Integer startcol,
     String k = opts.items[i].key;
     Object *v = &opts.items[i].value;
 
-    if (strequal(k.data, "filterfunc")){
+    if (strequal(k.data, "filterfunc")) {
       if (v->type != kObjectTypeLuaRef) {
         api_set_error(err, kErrorTypeValidation,
-                "expected lua function");
+                      "expected lua function");
         goto error;
       }
       active_filterfunc = user_filterfunc = v->data.luaref;
       v->data.luaref = LUA_NOREF;
     } else {
       api_set_error(err, kErrorTypeValidation,
-              "undexpected key");
+                    "unexpected key");
       goto error;
     }
   }
 
   object_to_vim(ARRAY_OBJ(matches), &tv, err);
-  if ERROR_SET(err){
+  if ERROR_SET(err) {
       goto error;
   }
 
@@ -2936,9 +2935,9 @@ error:
 /// @param func: function to register for filtering.
 ///
 void nvim_register_filterfunc(LuaRef func, Error *err)
-FUNC_API_SINCE(7)
+  FUNC_API_SINCE(7)
 {
-  if (func == -1) { // nil value for func
+  if (func == -1) {  // nil value for func
     api_free_luaref(global_filterfunc);
     active_filterfunc = global_filterfunc = LUA_NOREF;
     return;
