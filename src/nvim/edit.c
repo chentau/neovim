@@ -2761,7 +2761,9 @@ static int compare_scores(const void *a, const void *b)
   } else if (val > 0) {
       return 1;
   } else {
-    return 0;
+    // qsort is not stable: we don't want to flip two items that have
+    // the same score.
+    return (compl_score_T *)a - (compl_score_T *)b;
   }
 }
 
