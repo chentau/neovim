@@ -3896,8 +3896,8 @@ static bool ins_compl_prep(int c)
       if (user_filterfunc != LUA_NOREF) {
         api_free_luaref(user_filterfunc);
         user_filterfunc = LUA_NOREF;
-        active_filterfunc = global_filterfunc;
       }
+      active_filterfunc = global_filterfunc;
 
       if (!shortmess(SHM_COMPLETIONMENU)) {
         msg_clr_cmdline();                // necessary for "noshowmode"

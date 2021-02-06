@@ -1353,4 +1353,54 @@ describe("fuzzy completion", function()
   {3:-- INSERT --}                                                |
     ]])
   end)
+
+  it("allows overriding the global filterfunc with a local one", function()
+
+    -- global filterfunc doesn't match anything, but local
+    -- filterfunc matches everything. Local filterfunc
+    -- should override the global one
+    feed_command("lua vim.api.nvim_register_filterfunc(function(a, b) return 0 end)")
+
+    feed([[i=luaeval('vim.api.nvim_complete(1, {"hello", "world"}, {filterfunc = function(a, b) return 1 end})')<cr>]])
+
+    screen:expect([[
+  ^                                                            |
+  {1:hello          }{0:                                             }|
+  {1:world          }{0:                                             }|
+  {0:~                                                           }|
+  {0:~                                                           }|
+  {0:~                                                           }|
+  {0:~                                                           }|
+  {3:-- INSERT --}                                                |
+    ]])
+  end)
+
+  it("can revert back to exact prefix matching", function()
+    feed_command("lua vim.api.nvim_regsiter_filterfunc(function(a, b) return 1 end)")
+    feed([[i=luaeval('vim.api.nvim_complete(1, {"hello", "world"}, {exact=true})')<cr>]])
+
+    screen:expect([[
+  ^                                                            |
+  {1:hello          }{0:                                             }|
+  {1:world          }{0:                                             }|
+  {0:~                                                           }|
+  {0:~                                                           }|
+  {0:~                                                           }|
+  {0:~                                                           }|
+  {3:-- INSERT --}                                                |
+    ]])
+
+    feed("w")
+
+    screen:expect([[
+  w^                                                           |
+  {1:world          }{0:                                             }|
+  {0:~                                                           }|
+  {0:~                                                           }|
+  {0:~                                                           }|
+  {0:~                                                           }|
+  {0:~                                                           }|
+  {3:-- INSERT --}                                                |
+    ]])
+  end)
 end)

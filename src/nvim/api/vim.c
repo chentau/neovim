@@ -2863,9 +2863,9 @@ error:
 /// @param opts: Dictionary. Possible keys:
 ///                 filterfunc: function used for filtering the
 ///                     matches. See |nvim_register_filterfunc|.
-//
-// todo: what to do if filterfunc != NULL AND completion entry
-// has icase/equal set.
+///                 exact: boolean value. If true, disables fuzzy
+///                     finding and reverts to default exact prefix
+///                     matching for this completion.
 String nvim_complete(Integer startcol,
                      ArrayOf(String) matches,
                      DictionaryOf(LuaRef) opts,
@@ -2902,6 +2902,15 @@ String nvim_complete(Integer startcol,
       }
       active_filterfunc = user_filterfunc = v->data.luaref;
       v->data.luaref = LUA_NOREF;
+    } else if (strequal(k.data, "exact")) {
+      if (v->type != kObjectTypeBoolean) {
+        api_set_error(err, kErrorTypeValidation,
+                      "expected boolean");
+        goto error;
+      }
+      if (v->data.boolean) {
+        active_filterfunc = LUA_NOREF;
+      }
     } else {
       api_set_error(err, kErrorTypeValidation,
                     "unexpected key");
